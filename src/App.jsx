@@ -8,7 +8,10 @@ import Settings from "./pages/Settings";
 import Contact from "./pages/Contact";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
-import ScrollTop from "./components/ScrollTop";
+import ScrollTop from "./components/ScrollToTop";
+import { Toaster } from 'react-hot-toast'
+import ProfilePage from "./components/ProfilePage";
+import ScrollToTop from "./components/ScrollToTop";
 
 function App() {
   const location = useLocation();
@@ -20,9 +23,12 @@ function App() {
     <div className="min-h-screen flex flex-col relative">
       {/* Navbar */}
       {!hideNavbarFooter && <Navbar />}
+      <Toaster position="top-right" reverseOrder={false} />
+
 
       {/* Page Content */}
       <div className="flex-grow">
+        <ScrollToTop />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
@@ -31,6 +37,7 @@ function App() {
           <Route path="/reports" element={<Reports />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/my-profile" element={<ProfilePage />} />
         </Routes>
       </div>
 

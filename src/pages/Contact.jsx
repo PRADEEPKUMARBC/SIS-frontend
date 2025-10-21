@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { Mail, Phone, MapPin, Clock, Send, CheckCircle, AlertCircle } from 'lucide-react';
+import { useAppContext } from "../context/AppContext";
 
 function Contact() {
   const [formData, setFormData] = useState({
@@ -14,6 +15,11 @@ function Contact() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [activeFeature, setActiveFeature] = useState(0);
   const [formErrors, setFormErrors] = useState({});
+  const [submitError, setSubmitError] = useState("");
+  const { axios } = useAppContext()
+
+  // API base URL - change this to your backend URL
+  // const VITE_BACKEND_URL = process.env.VITE_BACKEND_URL || 'http://localhost:5000';
 
   // Support features carousel
   const supportFeatures = [
@@ -84,7 +90,7 @@ function Contact() {
     }
   ];
 
-  // Animation variants
+  // Animation variants (same as before)
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -175,6 +181,15 @@ function Contact() {
     }
   };
 
+  // Contact handlers
+  const handlePhoneClick = () => {
+    window.open('tel:6361736795');
+  };
+
+  const handleEmailClick = () => {
+    window.open('https://mail.google.com/mail/u/0/#inbox');
+  };
+
   // Auto-rotate features
   useEffect(() => {
     const interval = setInterval(() => {
@@ -189,12 +204,15 @@ function Contact() {
       ...prev,
       [name]: value
     }));
-    // Clear error when user starts typing
+    // Clear errors when user starts typing
     if (formErrors[name]) {
       setFormErrors(prev => ({
         ...prev,
         [name]: ""
       }));
+    }
+    if (submitError) {
+      setSubmitError("");
     }
   };
 
@@ -216,28 +234,52 @@ function Contact() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
-    
+
     setIsLoading(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    setIsLoading(false);
-    setIsSubmitted(true);
-    
-    // Reset form after success
-    setTimeout(() => {
+    setSubmitError("");
+
+    try {
+      const response = await axios.post(`/api/contact`, formData, {
+        headers: { "Content-Type": "application/json" },
+        withCredentials: true,
+      });
+
+      const result = response.data;
+
+      if (!result.success) {
+        throw new Error(result.message || "Failed to submit form");
+      }
+
+      console.log("Form submitted successfully:", result);
+      setIsLoading(false);
+      setIsSubmitted(true);
       setFormData({
         name: "",
         email: "",
         subject: "",
         message: "",
-        urgency: "normal"
+        urgency: "normal",
       });
-    }, 3000);
+    } catch (error) {
+      console.error("Error submitting form:", error);
+
+      if (error.response) {
+        console.error("Backend response:", error.response.data);
+        setSubmitError(error.response.data.message || "Failed to send message.");
+      } else if (error.request) {
+        console.error("No response received:", error.request);
+        setSubmitError("No response from server. Is backend running?");
+      } else {
+        setSubmitError(error.message);
+      }
+
+      setIsLoading(false);
+    }
   };
+
+
 
   if (isLoading) {
     return (
@@ -343,6 +385,17 @@ function Contact() {
                       Send Message
                     </h2>
                     <p className="text-gray-600 mb-8">We typically respond within 2 hours</p>
+
+                    {submitError && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center"
+                      >
+                        <AlertCircle className="text-red-500 mr-3" size={20} />
+                        <span className="text-red-700">{submitError}</span>
+                      </motion.div>
+                    )}
 
                     <form onSubmit={handleSubmit} className="space-y-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -461,7 +514,7 @@ function Contact() {
                             initial={{ opacity: 0, y: -10 }}
                             animate={{ opacity: 1, y: 0 }}
                             className="text-red-500 text-sm mt-2 flex items-center"
-                          >
+                            >
                             <AlertCircle size={16} className="mr-1" />
                             {formErrors.message}
                           </motion.p>
@@ -555,27 +608,33 @@ function Contact() {
                 <motion.div
                   variants={itemVariants}
                   whileHover="hover"
-                  className="bg-white rounded-2xl shadow-lg p-6 text-center"
+                  className="bg-white rounded-2xl shadow-lg p-6 text-center cursor-pointer"
+                  onClick={handlePhoneClick}
                 >
                   <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Phone className="text-green-600" size={24} />
                   </div>
                   <h4 className="font-semibold text-gray-800 mb-2">Call Us</h4>
                   <p className="text-gray-600 text-sm">24/7 Support Line</p>
-                  <p className="text-green-600 font-semibold">+1 (555) 123-IRRIGATE</p>
+                  <p className="text-green-600 font-semibold hover:text-green-700 transition-colors">
+                    6361736795
+                  </p>
                 </motion.div>
 
                 <motion.div
                   variants={itemVariants}
                   whileHover="hover"
-                  className="bg-white rounded-2xl shadow-lg p-6 text-center"
+                  className="bg-white rounded-2xl shadow-lg p-6 text-center cursor-pointer"
+                  onClick={handleEmailClick}
                 >
                   <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Mail className="text-blue-600" size={24} />
                   </div>
                   <h4 className="font-semibold text-gray-800 mb-2">Email Us</h4>
                   <p className="text-gray-600 text-sm">Quick Response</p>
-                  <p className="text-blue-600 font-semibold">support@irrigate.com</p>
+                  <p className="text-blue-600 font-semibold hover:text-blue-700 transition-colors break-all text-sm">
+                    pradeepkumarbc138@gmail.com
+                  </p>
                 </motion.div>
 
                 <motion.div

@@ -74,10 +74,10 @@ const Footer = () => {
     {
       title: "Connect With Us",
       links: [
-        { name: "LinkedIn", path: "#", icon: "💼" },
-        { name: "Twitter", path: "#", icon: "🐦" },
-        { name: "Facebook", path: "#", icon: "👥" },
-        { name: "YouTube", path: "#", icon: "🎥" }
+        { name: "LinkedIn", path: "https://www.linkedin.com/in/pradeepkumar-b-c-355801312?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app", icon: "💼" },
+        { name: "Twitter", path: "", icon: "🐦" },
+        { name: "Whatsapp", path: "www.whatsapp.com", icon: "👥" },
+        { name: "YouTube", path: "https://youtube.com/@code-quests5e?si=0V89auU_1rw_wFuW", icon: "🎥" }
       ]
     }
   ];
@@ -124,7 +124,7 @@ const Footer = () => {
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.5 }}
               >
-                SMART <span className="text-green-600">IRRIGATION</span>
+                SMART <span className="text-blue-400">IRRIGATION</span>
               </motion.h1>
             </motion.div>
             

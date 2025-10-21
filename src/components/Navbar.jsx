@@ -1,12 +1,31 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { assets } from "../assets/assets";
 import { useAppContext } from "../context/AppContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 function Navbar() {
-  const { navigate } = useAppContext();
+  const { user, logout,  } = useAppContext();
+  const navigate = useNavigate()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const profileDropdownRef = useRef(null);
+  const location = useLocation();
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
+        setIsProfileDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   // Navigation items
   const navItems = [
@@ -110,12 +129,44 @@ function Navbar() {
     }
   };
 
+  const profileDropdownVariants = {
+    closed: {
+      opacity: 0,
+      scale: 0.8,
+      y: -10,
+      transition: {
+        duration: 0.2,
+        ease: "easeIn"
+      }
+    },
+    open: {
+      opacity: 1,
+      scale: 1,
+      y: 0,
+      transition: {
+        duration: 0.3,
+        ease: "easeOut"
+      }
+    }
+  };
+
+  const handleLogout = () => {
+    logout();
+    setIsProfileDropdownOpen(false);
+    navigate("/")
+  };
+
+  const handleProfileClick = () => {
+    navigate("/my-profile");
+    setIsProfileDropdownOpen(false);
+  };
+
   return (
     <motion.nav
       initial="hidden"
       animate="visible"
       variants={containerVariants}
-      className="bg-gradient-to-r from-green-700 to-green-600 text-white shadow-2xl sticky top-0 z-50 py-3 "
+      className="bg-gradient-to-r from-green-700 to-green-600 text-white shadow-2xl sticky top-0 z-50 py-3"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
@@ -144,43 +195,192 @@ function Navbar() {
           </motion.div>
 
           {/* Desktop Navigation */}
-          <motion.div 
-            className="hidden md:flex space-x-2 lg:space-x-6"
-            variants={containerVariants}
-          >
-            {navItems.map((item, index) => (
-              <motion.div
-                key={item.path}
-                custom={index}
-                initial="hidden"
-                animate="visible"
-                variants={navItemVariants}
-              >
-                <Link to={item.path}>
-                  <motion.span
-                    className="px-3 py-2 rounded-lg font-medium  montserrat-subhead text-sm  lg:text-base relative group"
-                    variants={navItemVariants}
-                    whileHover="hover"
-                    whileTap="tap"
-                  >
-                    {item.label}
-                    {/* Hover underline effect */}
+          <div className="hidden md:flex items-center space-x-2 lg:space-x-6">
+            <motion.div 
+              className="flex space-x-2 lg:space-x-4"
+              variants={containerVariants}
+            >
+              {navItems.map((item, index) => (
+                <motion.div
+                  key={item.path}
+                  custom={index}
+                  initial="hidden"
+                  animate="visible"
+                  variants={navItemVariants}
+                >
+                  <Link to={item.path}>
                     <motion.span
-                      className="absolute bottom-0 left-0 w-0 h-0.5 bg-yellow-200 group-hover:w-full"
-                      transition={{ duration: 0.3 }}
-                    />
+                      className="px-3 py-2 rounded-lg font-medium montserrat-subhead text-sm lg:text-base relative group"
+                      variants={navItemVariants}
+                      whileHover="hover"
+                      whileTap="tap"
+                    >
+                      {item.label}
+                      {/* Active page underline */}
+                      {location.pathname === item.path && (
+                        <motion.span
+                          className="absolute bottom-0 left-0 w-full h-0.5 bg-yellow-200"
+                          initial={{ scaleX: 0 }}
+                          animate={{ scaleX: 1 }}
+                          transition={{ duration: 0.3 }}
+                        />
+                      )}
+                      {/* Hover underline effect */}
+                      {location.pathname !== item.path && (
+                        <motion.span
+                          className="absolute bottom-0 left-0 w-0 h-0.5 bg-yellow-200 group-hover:w-full"
+                          transition={{ duration: 0.3 }}
+                        />
+                      )}
+                    </motion.span>
+                  </Link>
+                </motion.div>
+              ))}
+            </motion.div>
+
+            {/* Profile Dropdown */}
+            {user ? (
+              <motion.div 
+                className="relative ml-4"
+                ref={profileDropdownRef}
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.6 }}
+              >
+                <motion.button
+                  onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+                  className="flex items-center gap-2 p-2 rounded-lg bg-green-800 hover:bg-green-900 transition-colors"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <div className="w-8 h-8 bg-yellow-200 rounded-full flex items-center justify-center">
+                    <span className="text-green-800 font-bold text-sm">
+                      {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                    </span>
+                  </div>
+                  <motion.span
+                    animate={{ rotate: isProfileDropdownOpen ? 180 : 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    ▼
                   </motion.span>
-                </Link>
+                </motion.button>
+
+                <AnimatePresence>
+                  {isProfileDropdownOpen && (
+                    <motion.div
+                      variants={profileDropdownVariants}
+                      initial="closed"
+                      animate="open"
+                      exit="closed"
+                      className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-2xl border border-green-200 overflow-hidden"
+                    >
+                      {/* Profile Header */}
+                      <div className="p-4 bg-green-50 border-b border-green-200">
+                        <p className="font-semibold text-green-800 text-sm truncate">
+                          {user.name || 'User'}
+                        </p>
+                        <p className="text-green-600 text-xs truncate">
+                          {user.email}
+                        </p>
+                        {user.farmName && (
+                          <p className="text-green-500 text-xs mt-1 truncate">
+                            🚜 {user.farmName}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Dropdown Items */}
+                      <div className="py-1">
+                        <motion.button
+                          onClick={handleProfileClick}
+                          className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-green-50 transition-colors flex items-center gap-3"
+                          whileHover={{ x: 5 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <span className="w-5 h-5">👤</span>
+                          My Profile
+                        </motion.button>
+
+                        <motion.button
+                          onClick={handleLogout}
+                          className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-3"
+                          whileHover={{ x: 5 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <span className="w-5 h-5">🚪</span>
+                          Logout
+                        </motion.button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </motion.div>
-            ))}
-          </motion.div>
+            ) : (
+              // Login/Signup buttons when not logged in
+              <motion.div 
+                className="flex items-center gap-2 ml-4"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.6 }}
+              >
+                <motion.button
+                  onClick={() => navigate("/login")}
+                  className="px-4 py-2 bg-blue-200 text-green-900 rounded-lg cursor-pointer font-semibold hover:bg-yellow-300 transition-colors"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Login
+                </motion.button>
+              </motion.div>
+            )}
+          </div>
 
           {/* Mobile Menu Button */}
           <motion.div
-            className="md:hidden"
+            className="md:hidden flex items-center gap-3"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
           >
+            {user && (
+  <motion.div 
+    className="relative"
+    initial={{ opacity: 0, scale: 0 }}
+    animate={{ opacity: 1, scale: 1 }}
+  >
+    <div
+      onClick={() => setShowProfileMenu(!showProfileMenu)}
+      className="w-8 h-8 bg-yellow-200 rounded-full flex items-center justify-center cursor-pointer"
+    >
+      <span className="text-green-800 font-bold text-sm">
+        {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+      </span>
+    </div>
+
+    {showProfileMenu && (
+      <div className="absolute right-0 mt-2 w-40 bg-white shadow-lg rounded-lg py-2 z-50">
+        <Link
+          to="/my-profile"
+          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+          onClick={() => setShowProfileMenu(false)}
+        >
+          👤 My Profile
+        </Link>
+        <button
+          onClick={() => {
+            handleLogout();
+            setShowProfileMenu(false);
+          }}
+          className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+        >
+          🚪 Logout
+        </button>
+      </div>
+    )}
+  </motion.div>
+)}
+
+            
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="p-2 rounded-lg bg-green-800 hover:bg-green-900 transition-colors"
@@ -236,6 +436,32 @@ function Navbar() {
                   <span className="text-2xl">×</span>
                 </motion.button>
 
+                {/* User Info in Mobile Menu */}
+                {user && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                    className="mb-6 p-4 bg-green-600 rounded-lg"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-yellow-200 rounded-full flex items-center justify-center">
+                        <span className="text-green-800 font-bold">
+                          {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-white text-sm">
+                          {user.name || 'User'}
+                        </p>
+                        <p className="text-green-200 text-xs">
+                          {user.email}
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
                 {/* Mobile Navigation Items */}
                 <div className="space-y-4">
                   {navItems.map((item, index) => (
@@ -250,12 +476,69 @@ function Navbar() {
                       <Link
                         to={item.path}
                         onClick={() => setIsMobileMenuOpen(false)}
-                        className="block py-3 px-4 rounded-lg text-lg font-medium montserrat-subhead border-l-4 border-transparent hover:border-yellow-200 transition-all"
+                        className={`block py-3 px-4 rounded-lg text-lg font-medium montserrat-subhead border-l-4 transition-all ${
+                          location.pathname === item.path 
+                            ? "border-yellow-200 bg-green-600" 
+                            : "border-transparent hover:border-yellow-200"
+                        }`}
                       >
                         {item.label}
                       </Link>
                     </motion.div>
                   ))}
+
+                  {/* Mobile Auth Buttons */}
+                  {!user ? (
+                    <motion.div
+                      variants={mobileItemVariants}
+                      initial="closed"
+                      animate="open"
+                      custom={navItems.length}
+                    >
+                      <button
+                        onClick={() => {
+                          setIsMobileMenuOpen(false);
+                          navigate("/login");
+                        }}
+                        className="w-full text-left py-3 px-4 rounded-lg text-lg font-medium montserrat-subhead bg-yellow-400 text-green-900 hover:bg-yellow-300 transition-colors"
+                      >
+                        Login / Sign Up
+                      </button>
+                    </motion.div>
+                  ) : (
+                    <>
+                      <motion.div
+                        variants={mobileItemVariants}
+                        initial="closed"
+                        animate="open"
+                        custom={navItems.length}
+                      >
+                        <Link
+                          to="/my-profile"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="block py-3 px-4 rounded-lg text-lg font-medium montserrat-subhead border-l-4 border-transparent hover:border-yellow-200 transition-all"
+                        >
+                          👤 My Profile
+                        </Link>
+                      </motion.div>
+                      <motion.div
+                        variants={mobileItemVariants}
+                        initial="closed"
+                        animate="open"
+                        custom={navItems.length + 1}
+                      >
+                        <button
+                          onClick={() => {
+                            setIsMobileMenuOpen(false);
+                            handleLogout();
+                          }}
+                          className="w-full text-left py-3 px-4 rounded-lg text-lg font-medium montserrat-subhead text-red-300 hover:bg-red-900 transition-colors"
+                        >
+                          🚪 Logout
+                        </button>
+                      </motion.div>
+                    </>
+                  )}
                 </div>
 
                 {/* Additional Mobile Info */}

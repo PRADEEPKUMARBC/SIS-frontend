@@ -2,6 +2,9 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import { assets } from "../assets/assets";
+import { AppContext } from "../context/AppContext";
+import { useContext } from "react";
+
 
 // Custom font styles using your specified fonts
 const fontStyles = {
@@ -92,7 +95,7 @@ const HeroImage = () => (
     animate={{ opacity: 1, x: 0 }}
     transition={{ duration: 0.8, delay: 0.5 }}
   >
-    <div className="relative w-full max-w-2xl mx-auto pl-6">
+    <div className="relative w-full max-w-2xl mx-auto ml-1">
       {/* Header Image */}
           <motion.img
       src={assets.header}
@@ -150,6 +153,8 @@ function Home() {
   const benefitsSection = useScrollAnimation();
   const featuresSection = useScrollAnimation();
   const scopeSection = useScrollAnimation();
+  const { user } = useContext(AppContext);
+
 
   return (
     <div className="bg-gradient-to-b from-green-50 to-white min-h-screen overflow-hidden">
@@ -202,7 +207,7 @@ function Home() {
                 whileTap={{ scale: 0.95 }}
               >
                 Get Started Today
-              </motion.button>
+              </motion.button> 
             </Link>
             <Link to="/dashboard" className="flex-1">
               <motion.button 
@@ -600,29 +605,31 @@ function Home() {
       </motion.section>
 
       {/* Floating CTA */}
-      <motion.div
-        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 lg:bottom-8 lg:right-8 z-50"
-        initial={{ opacity: 0, scale: 0 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 1, type: "spring" }}
+      {!user && (
+  <motion.div
+    className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 lg:bottom-8 lg:right-8 z-50"
+    initial={{ opacity: 0, scale: 0 }}
+    animate={{ opacity: 1, scale: 1 }}
+    transition={{ delay: 1, type: "spring" }}
+  >
+    <Link to="/login">
+      <motion.button
+        className="bg-green-600 text-white px-4 py-2 sm:px-6 sm:py-3 rounded-full shadow-lg flex items-center space-x-2 text-sm sm:text-base"
+        style={fontStyles.button}
+        whileHover={{ scale: 1.1, backgroundColor: "#16a34a" }}
+        whileTap={{ scale: 0.9 }}
       >
-        <Link to="/login">
-          <motion.button
-            className="bg-green-600 text-white px-4 py-2 sm:px-6 sm:py-3 rounded-full shadow-lg flex items-center space-x-2 text-sm sm:text-base"
-            style={fontStyles.button}
-            whileHover={{ scale: 1.1, backgroundColor: "#16a34a" }}
-            whileTap={{ scale: 0.9 }}
-          >
-            <span>Start Saving Water</span>
-            <motion.span
-              animate={{ rotate: 360 }}
-              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-            >
-              💧
-            </motion.span>
-          </motion.button>
-        </Link>
-      </motion.div>
+        <span>Start Saving Water</span>
+        <motion.span
+          animate={{ rotate: 360 }}
+          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+        >
+          💧
+        </motion.span>
+      </motion.button>
+    </Link>
+  </motion.div>
+)}
     </div>
   );
 }
